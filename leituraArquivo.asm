@@ -300,13 +300,9 @@ escreve_no_arquivo:
    
    # escrevendo string no arquivo
    move $a0, $s2
-   la $a1, end
-   li $a2, 17
+   la $a1, quebraDeLinhaAsc
+   li $a2, 1
    li $v0, 15
-   syscall
-   
-   la $a0, end
-   li $v0, 4
    syscall
    
    # fecha arquivo
