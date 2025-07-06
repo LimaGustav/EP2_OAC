@@ -14,7 +14,7 @@
 	
 	digitosEmFloat: .float 0.0,1.0,2.0,3.0,4.0,5.0,6.0,7.0,8.0,9.0
 	
-	vetorFloat: .space 4096
+	vetorFloat: .space 120000
 	
 	espaco: .asciiz " "
 
@@ -41,9 +41,13 @@ le_arquivo:
    move $s7, $a0 # quantidade de bytes lidos do arquivo
    addi $t7, $s7, 1
    
+   la $a0, quebraDeLinhaAsc
+   li $v0, 4
+   syscall
+   
    
    #la $t1, linhaAtual
-   la $t1, vetorFloat
+   la $s1, vetorFloat
    la $t4, quebraDeLinhaAsc
    lw $t4, 0($t4)
    la $t5, conteudoDoArquivo
@@ -79,6 +83,9 @@ le_arquivo:
       li $v0, 1
       syscall
       
+      # la $a0, vetorFloat
+      # jal imprime_vetor
+      
       li $v0, 10
       syscall
    
@@ -95,6 +102,10 @@ le_arquivo:
       mov.s $f12, $f0
       li $v0, 2
       syscall
+      
+      # guarda float no vetor
+      swc1 $f0, 0($s1)
+      addi $s1, $s1, 4
       
       la $t9, linhaAtual
       
@@ -195,3 +206,71 @@ converte_string_para_float:
 
    retorno:
       jr   $ra
+
+
+
+
+# imprime_vetor: # a0 = tamanho; a1 = vetor
+#    addi $sp, $sp, -4
+#    sw $ra, 0($sp)
+
+#    li $t0, 4 # tamanho da palavra
+#    mul $t1, $a0, $t0 # tamanho real do vetor
+#    move $t2, $a1 # armazena vetor
+#    li $t3, 0
+
+#    iv_loop:
+#       beq $t3, $t1, end_iv_loop
+#       lw $a0, 0($t2)
+      
+#       jal imprime_float
+      
+#       addi $t2, $t2, 4 # incrementa a posicao do vetor
+#       addi $t3, $t3, 4 # incrementa o i do loop
+      
+#       j iv_loop
+      
+#    end_iv_loop:
+#       lw $ra, 0($sp)
+#       addi $sp, $sp, 4
+
+#       jr $ra
+
+
+
+
+
+# imprime_float:
+#    addi $sp, $sp, -4
+#    sw $ra, 0($sp)
+   
+#    mtc1 $a0, $f2
+   
+#    add.s $f12, $f10, $f2
+
+#    li $v0, 2
+#    syscall 
+   
+#    la $a0, espaco
+#    jal imprime_string
+   
+#    lw $ra, 0($sp)
+#    addi $sp, $sp, 4
+   
+#    jr $ra
+
+
+
+
+
+# imprime_string:
+#    addi $sp, $sp, -4
+#    sw $ra, 0($sp)
+   
+#    li $v0, 4
+#    syscall
+   
+#    lw $ra, 0($sp)
+#    addi $sp, $sp, 4
+   
+#    jr $ra
