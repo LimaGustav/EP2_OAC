@@ -94,6 +94,10 @@
 	   la $a1, vetorString
 	   jal imprime_vetor_de_string
 	   
+	   move $a1, $s4
+	   la $a0, vetorString
+	   jal escreve_no_arquivo
+	   
 	   li $v0, 10
 	   syscall
 	   
