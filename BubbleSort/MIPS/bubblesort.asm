@@ -1,8 +1,6 @@
 .data
-	vetor: .float 1.1 12.0 3.0 5.0 3.0 7.0 0.0 -15.0 11.0
 	zeroF: .float 0.0
 	space: .asciiz " "
-	
 	
 	end: .asciiz "\nFim do looping: "
 	antes: .asciiz "\nAntes do algoritmo: "
@@ -20,7 +18,7 @@
 	
 	digitosEmFloat: .float 0.0,1.0,2.0,3.0,4.0,5.0,6.0,7.0,8.0,9.0
 	
-	vetorFloat: .space 120000
+	vetor: .space 120000
 	vetorString: .space 120000
 	
 	espaco: .asciiz " "
@@ -29,112 +27,127 @@
 .text
 	jal le_arquivo
 
-	la $s0, vetorFloat
-	li $s1, 0 # i do loop
-	li $s3, 4 # tamanho da palavra
-	# li $s4, 9 # ultimo valor de de i
-	move $s4, $s6 # quantidade de palavras do vetor
-	subi $s5, $s4, 1 # quantidade de vezes que o j serah percorrido
-	# li $s5, 8 # ultimo valor de j
-	
-	mul $s6, $s4, $s3 # ultima posicao do vetor
-	
-	move $a0, $s6
-	li $v0, 1
-	syscall
-	
-	lwc1 $f10, zeroF
-	
-	
-	la $a0, antes
-	jal imprime_string
-	
-	move $a0, $s4
-	move $a1, $s0
-	jal imprime_vetor
-	
-	loop:
-           beq $s1, $s4, end_loop # finaliza o loop se i == ultima posicao do vetor
-	   mul $t0, $s3, $s1 # posicao atual do i no vetor
-	   li $s2, 0 # j do loop2
-	   
-	   loop2:
-	      beq $s2, $s5, end_loop2 # checa se o j do loop2 é igual à última posição
-	      mul $t2, $s2, $s3 # posicao atual do j
-	      addi $t4, $s2, 1 # proximo valor de j
-	      mul $t4, $t4, $s3
-	      
-	      lwc1 $f12, 0($s0) # lê valor da posicao j do vetor
-	      
-	      addi $s2, $s2, 1
-	      addi $s0, $s0, 4
-	      
-	      lwc1 $f14, 0($s0) # lê valor da proxima posicao j do vetor
-	      
-	      move $a0, $t2
-	      move $a1, $t4
-	      
-	      c.lt.s, $f14, $f12
-	      bc1t swap
-	      
-	      j loop2
-	      
-	      end_loop2:
-           
-           addi $s1, $s1, 1
-           la $s0, vetorFloat
-	   j loop
-	   
-	   
-        end_loop:
-	   la $a0, depois
-	   jal imprime_string
-	   
-	   move $a0, $s4 # tamanho do vetor
-	   la $a1, vetorString
-	   jal imprime_vetor_de_string
-	   
-	   move $a1, $s4
-	   la $a0, vetorString
-	   jal escreve_no_arquivo
-	   
-	   li $v0, 10
-	   syscall
-	   
-	   
-	swap: # $a0 = posicao à esquerda, $a1 = posicao à direita; $f12 = float a esquerda; $f14 = float a direita
-	   move $t0, $a0 # armazena posicao do valor a esquerda em registrado temporaria
-	   mov.s $f1, $f12 # armazena valor a esquerda em registrador temporario
-	   
-	   la $t2, vetorFloat
-	   add $t3, $t2, $a0 # posicao no vetor do valor a esquerda
-	   
-	   la $t4, vetorFloat
-	   add $t5, $t4, $a1 # posicao no vetor do valor a direita
-	   
-	   swc1 $f14, 0($t3) # coloca valor a direita na posicao da esquerda
-	   swc1 $f1, 0($t5) # coloca valor a esquerda na posicao da direita
-	   
-	   # swap da string agora
-	   
-	   li $t6, 8 # valor que precisa para ser multiplicado e cehgar a 32 bytes
-	   
-	   mul $t0, $t0, $t6 # transforma a posicao a esquerda na posicao da string, que eh de 32 bytes
-	   
-	   mul $t2, $a1, $t6 # transforma a posicao a direita na posicao da string, que eh de 32 bytes
-	   
-	   la $t3, vetorString
-	   add $t3, $t3, $t0 #posicao no vetor do valor a esquerda
-	   lw $t5, 0($t3)
-	   
-	   la $t4, vetorString
-	   add $t4, $t4, $t2
-	   lw $t6, 0($t4)
-	   
-	   sw $t5, 0($t4)
-	   sw $t6, 0($t3)
-	   
-	   j loop2
+   la $s0, vetor
+   li $s1, 0 # i do loop
+   li $s3, 4 # tamanho da palavra
+   move $s4, $s6 # quantidade de palavras do vetor
+   subi $s5, $s4, 1 # quantidade de vezes que o j serah percorrido
+
+   li $s7, 0 # tipo de ordenação escolhido. 0 = bubblesort, 1 = quicksort
+      
+   mul $s6, $s4, $s3 # tamanho do vetor em bytes
+
+   jal bubblesort
+
+   li $t0, 1
+   beq $s7, $zero, executa_bubblesort
+   beq $s7, $t0, executa_quicksort
+
+   li $v0, 10
+   syscall
+
+   executa_bubblesort:
+      jal bubblesort
+
+      move $a0, $v0 # pega vetor retornado e coloca em a0
+      move $a1, $s4 # pega tamanho do vetor e coloca em a1
+      jal escreve_no_arquivo
+
+      li $v0, 10
+      syscall
+
+   executa_quicksort:
+      # precisamos implementar ainda
+      li $v0, 10
+      syscall
+
+
+
+
+   bubblesort:
+      addi $sp, $sp, -4
+      sw $ra, 0($sp)
+
+      lwc1 $f10, zeroF
+      
+      move $a0, $s4
+      move $a1, $s0
+      jal imprime_vetor
+      
+      loop:
+            beq $s1, $s4, end_loop # finaliza o loop se i == ultima posicao do vetor
+         mul $t0, $s3, $s1 # posicao atual do i no vetor
+         li $s2, 0 # j do loop2
+         
+         loop2:
+            beq $s2, $s5, end_loop2 # checa se o j do loop2 é igual à última posição
+            mul $t2, $s2, $s3 # posicao atual do j
+            addi $t4, $s2, 1 # proximo valor de j
+            mul $t4, $t4, $s3
+            
+            lwc1 $f12, 0($s0) # lê valor da posicao j do vetor
+            
+            addi $s2, $s2, 1
+            addi $s0, $s0, 4
+            
+            lwc1 $f14, 0($s0) # lê valor da proxima posicao j do vetor
+            
+            move $a0, $t2
+            move $a1, $t4
+            
+            c.lt.s, $f14, $f12
+            bc1t swap
+            
+            j loop2
+            
+         end_loop2:
+            addi $s1, $s1, 1
+            la $s0, vetor
+            j loop
+         
+         
+      end_loop: # se finalizado, retorna o vetor ordenado
+         lw $ra, 0($sp)
+         addi $sp, $sp, 4
+
+         la $v0, vetorString
+
+         jr $ra
+         
+         
+      swap: # $a0 = posicao à esquerda, $a1 = posicao à direita; $f12 = float a esquerda; $f14 = float a direita
+         move $t0, $a0 # armazena posicao do valor a esquerda em registrado temporaria
+         mov.s $f1, $f12 # armazena valor a esquerda em registrador temporario
+         
+         la $t2, vetor
+         add $t3, $t2, $a0 # posicao no vetor do valor a esquerda
+         
+         la $t4, vetor
+         add $t5, $t4, $a1 # posicao no vetor do valor a direita
+         
+         swc1 $f14, 0($t3) # coloca valor a direita na posicao da esquerda
+         swc1 $f1, 0($t5) # coloca valor a esquerda na posicao da direita
+         
+         # swap da string agora
+         
+         li $t6, 8 # valor que precisa para ser multiplicado e cehgar a 32 bytes
+         
+         mul $t0, $t0, $t6 # transforma a posicao a esquerda na posicao da string, que eh de 32 bytes
+         
+         mul $t2, $a1, $t6 # transforma a posicao a direita na posicao da string, que eh de 32 bytes
+         
+         la $t3, vetorString
+         add $t3, $t3, $t0 #posicao no vetor do valor a esquerda
+         lw $t5, 0($t3)
+         
+         la $t4, vetorString
+         add $t4, $t4, $t2
+         lw $t6, 0($t4)
+         
+         sw $t5, 0($t4)
+         sw $t6, 0($t3)
+         
+         j loop2
 	   
 
 
@@ -165,20 +178,11 @@ le_arquivo:
    li $v0, 14
    syscall
    
-   move $a0, $v0
-   li $v0, 1
-   syscall
-   
+   move $a0, $v0 # tamanho lido do arquivo
    move $s7, $a0 # quantidade de bytes lidos do arquivo
    addi $t7, $s7, 1
    
-   la $a0, quebraDeLinhaAsc
-   li $v0, 4
-   syscall
-   
-   
-   #la $t1, linhaAtual
-   la $s1, vetorFloat
+   la $s1, vetor
    la $t4, quebraDeLinhaAsc
    lw $t4, 0($t4)
    la $t5, conteudoDoArquivo
@@ -188,9 +192,6 @@ le_arquivo:
    la $t9, linhaAtual # linha atual
    
    la $s3, vetorString
-   
-   
-   
    
    read_loop:
       bgt $t7, $s7, fim_read_loop
@@ -206,43 +207,9 @@ le_arquivo:
       addi $t9, $t9, 1
       
       j read_loop
-   
-   
-   
-   
-   fim_read_loop:  
-      la $a0, quebraDeLinhaAsc
-      li $v0, 4
-      syscall
-   
-      move $a0, $t7
-      li $v0, 1
-      syscall
-      
-      la $a0, quebraDeLinhaAsc
-      li $v0, 4
-      syscall
-      
-      # move $a0, $s6
-      # la $a1, vetorFloat
-      # jal imprime_vetor
-      
-      # la $a0, quebraDeLinhaAsc
-      # li $v0, 4
-      # syscall
-      
-      # move $a0, $s6 # move tamanho do vetor para a0
-      # la  $a1, vetorString
-      # jal imprime_vetor_de_string
 
+   fim_read_loop:  
       jal fecha_arquivo
-      
-      # la $a0, vetorString
-      # move $a1, $s6 # move tamanho do vetor para a1
-      # jal escreve_no_arquivo
-      
-      # li $v0, 10
-      # syscall
       
       lw $ra, 0($sp)
       addi $sp, $sp, 4
@@ -257,13 +224,13 @@ le_arquivo:
    grava_numero_como_float:
       sb $zero, 0($t9) # adiciono o 0 no fim para indicar que é uma string
       
-      # conversão da linha atual em float
       la $a0, linhaAtual
       move $a1, $s3
       jal copia_string
       
       la $a0, linhaAtual
       
+      # conversão da linha atual, que estah como string, em float
       jal converte_string_para_float
       
       # guarda float no vetor
@@ -277,30 +244,57 @@ le_arquivo:
    
       j read_loop
    
+
+
+
+
+
+
+
+
+
+
+# $a0 = origem, $a1 = destino
+copia_string:
+   lb   $s4, 0($a0)       # carrega o byte atual da origem
+   sb   $s4, 0($a1)       # armazena no destino
+   beqz $s4, fim_copia    # se for 0 (fim da string), termina
+   addi $a0, $a0, 1       # avança na origem
+   addi $a1, $a1, 1       # avança no destino
+   j copia_string
+
+fim_copia:
+   jr $ra
    
    
-   
-      copia_string:
-          lb   $s4, 0($a0)       # carrega o byte atual da origem
-          sb   $s4, 0($a1)       # armazena no destino
-          beqz $s4, fim_copia    # se for 0 (fim da string), termina
-          addi $a0, $a0, 1       # avança na origem
-          addi $a1, $a1, 1       # avança no destino
-          j copia_string
-  
-      fim_copia:
-          jr $ra
-         
+
+
+
+
+
+
+
+
+
+
    
    
-   
-# fecha arquivo
+# fecha arquivo que estava sendo lido
 fecha_arquivo:
    li $v0, 16
    move $a0, $s2
    syscall
    
    jr $ra
+
+
+
+
+
+
+
+
+
 
 
 
@@ -382,7 +376,15 @@ converte_string_para_float:
 
 
 
-imprime_vetor: # a0 = tamanho; a1 = vetor
+
+
+
+
+
+
+
+# $0 = tamanho do vetor; $a1 = vetor de floats
+imprime_vetor:
    addi $sp, $sp, -4
    sw $ra, 0($sp)
 
@@ -393,9 +395,6 @@ imprime_vetor: # a0 = tamanho; a1 = vetor
 
    iv_loop:
       beq $t3, $t1, end_iv_loop
-      lw $a0, 0($t2)
-      
-      jal imprime_float
       
       addi $t2, $t2, 4 # incrementa a posicao do vetor
       addi $t3, $t3, 4 # incrementa o i do loop
@@ -411,7 +410,12 @@ imprime_vetor: # a0 = tamanho; a1 = vetor
 
 
 
-imprime_vetor_de_string: # a0 = tamanho; a1 = vetor
+
+
+
+
+# $0 = tamanho do vetor; $a1 = vetor de strings
+imprime_vetor_de_string:
    addi $sp, $sp, -4
    sw $ra, 0($sp)
 
@@ -422,12 +426,6 @@ imprime_vetor_de_string: # a0 = tamanho; a1 = vetor
 
    ivs_loop:
       bgt $t3, $t1, end_ivs_loop
-      move $a0, $t2
-      
-      jal imprime_string
-      
-      la $a0, espaco
-      jal imprime_string
       
       addi $t2, $t2, 32 # incrementa a posicao do vetor
       addi $t3, $t3, 32 # incrementa o i do loop
@@ -442,6 +440,16 @@ imprime_vetor_de_string: # a0 = tamanho; a1 = vetor
 
 
 
+
+
+
+
+
+
+
+
+
+# $a0 = float a ser impresso
 imprime_float:
    addi $sp, $sp, -4
    sw $ra, 0($sp)
@@ -465,6 +473,14 @@ imprime_float:
 
 
 
+
+
+
+
+
+
+
+# $a0 = string a ser impressa
 imprime_string:
    addi $sp, $sp, -4
    sw $ra, 0($sp)
@@ -480,6 +496,13 @@ imprime_string:
    addi $sp, $sp, 4
    
    jr $ra
+
+
+
+
+
+
+
 
 
 
