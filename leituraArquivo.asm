@@ -51,7 +51,7 @@ le_arquivo:
    la $t4, quebraDeLinhaAsc
    lw $t4, 0($t4)
    la $t5, conteudoDoArquivo
-   li $t6, 0 # contador de palavras
+   li $s6, 0 # contador de palavras
    li $t7, 0 # contador de caracteres lidos
    li $t8, 0 # posicao no vetor
    
@@ -83,8 +83,13 @@ le_arquivo:
       li $v0, 1
       syscall
       
-      # la $a0, vetorFloat
-      # jal imprime_vetor
+      la $a0, quebraDeLinhaAsc
+      li $v0, 4
+      syscall
+      
+      move $a0, $s6
+      la $a1, vetorFloat
+      jal imprime_vetor
       
       li $v0, 10
       syscall
@@ -93,15 +98,15 @@ le_arquivo:
    grava_numero_como_float:
       sb $zero, 0($t9) # adiciono o 0 no fim para indicar que é uma string
       
-      addi $t6, $t6, 1
+      addi $s6, $s6, 1
       
       # conversão da linha atual em float
       la $a0, linhaAtual
       jal converte_string_para_float
       
-      mov.s $f12, $f0
-      li $v0, 2
-      syscall
+      # mov.s $f12, $f0
+      # li $v0, 2
+      # syscall
       
       # guarda float no vetor
       swc1 $f0, 0($s1)
@@ -109,9 +114,9 @@ le_arquivo:
       
       la $t9, linhaAtual
       
-      la $a0, espaco
-      li $v0, 4
-      syscall
+      # la $a0, espaco
+      # li $v0, 4
+      # syscall
    
       j read_loop
    
@@ -210,67 +215,67 @@ converte_string_para_float:
 
 
 
-# imprime_vetor: # a0 = tamanho; a1 = vetor
-#    addi $sp, $sp, -4
-#    sw $ra, 0($sp)
+imprime_vetor: # a0 = tamanho; a1 = vetor
+   addi $sp, $sp, -4
+   sw $ra, 0($sp)
 
-#    li $t0, 4 # tamanho da palavra
-#    mul $t1, $a0, $t0 # tamanho real do vetor
-#    move $t2, $a1 # armazena vetor
-#    li $t3, 0
+   li $t0, 4 # tamanho da palavra
+   mul $t1, $a0, $t0 # tamanho real do vetor
+   move $t2, $a1 # armazena vetor
+   li $t3, 0
 
-#    iv_loop:
-#       beq $t3, $t1, end_iv_loop
-#       lw $a0, 0($t2)
+   iv_loop:
+      beq $t3, $t1, end_iv_loop
+      lw $a0, 0($t2)
       
-#       jal imprime_float
+      jal imprime_float
       
-#       addi $t2, $t2, 4 # incrementa a posicao do vetor
-#       addi $t3, $t3, 4 # incrementa o i do loop
+      addi $t2, $t2, 4 # incrementa a posicao do vetor
+      addi $t3, $t3, 4 # incrementa o i do loop
       
-#       j iv_loop
+      j iv_loop
       
-#    end_iv_loop:
-#       lw $ra, 0($sp)
-#       addi $sp, $sp, 4
+   end_iv_loop:
+      lw $ra, 0($sp)
+      addi $sp, $sp, 4
 
-#       jr $ra
-
-
+      jr $ra
 
 
 
-# imprime_float:
-#    addi $sp, $sp, -4
-#    sw $ra, 0($sp)
+
+
+imprime_float:
+   addi $sp, $sp, -4
+   sw $ra, 0($sp)
    
-#    mtc1 $a0, $f2
+   mtc1 $a0, $f2
    
-#    add.s $f12, $f10, $f2
+   add.s $f12, $f10, $f2
 
-#    li $v0, 2
-#    syscall 
+   li $v0, 2
+   syscall 
    
-#    la $a0, espaco
-#    jal imprime_string
+   la $a0, espaco
+   jal imprime_string
    
-#    lw $ra, 0($sp)
-#    addi $sp, $sp, 4
+   lw $ra, 0($sp)
+   addi $sp, $sp, 4
    
-#    jr $ra
-
-
+   jr $ra
 
 
 
-# imprime_string:
-#    addi $sp, $sp, -4
-#    sw $ra, 0($sp)
+
+
+imprime_string:
+   addi $sp, $sp, -4
+   sw $ra, 0($sp)
    
-#    li $v0, 4
-#    syscall
+   li $v0, 4
+   syscall
    
-#    lw $ra, 0($sp)
-#    addi $sp, $sp, 4
+   lw $ra, 0($sp)
+   addi $sp, $sp, 4
    
-#    jr $ra
+   jr $ra
