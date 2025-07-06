@@ -54,9 +54,12 @@ le_arquivo:
    la $t5, conteudoDoArquivo
    li $s6, 0 # contador de palavras
    li $t7, 0 # contador de caracteres lidos
-   li $t8, 0 # posicao no vetor
    
    la $t9, linhaAtual # linha atual
+   
+   la $s3, vetorString
+   
+   
    
    
    read_loop:
@@ -75,6 +78,8 @@ le_arquivo:
       j read_loop
    
    
+   
+   
    fim_read_loop:
       la $a0, quebraDeLinhaAsc
       li $v0, 4
@@ -91,33 +96,55 @@ le_arquivo:
       move $a0, $s6
       la $a1, vetorFloat
       jal imprime_vetor
+      
+      la $a0, quebraDeLinhaAsc
+      li $v0, 4
+      syscall
+      
+      # move $a0, $s6
+      move $a0, $s6
+      la  $a1, vetorString
+      jal imprime_vetor_de_string
 
       jal fecha_arquivo
       
-      jal escreve_no_arquivo
+      # jal escreve_no_arquivo
       
       li $v0, 10
       syscall
    
    
+   
+   
+   
+   
    grava_numero_como_float:
       sb $zero, 0($t9) # adiciono o 0 no fim para indicar que é uma string
       
-      addi $s6, $s6, 1
-      
       # conversão da linha atual em float
       la $a0, linhaAtual
+      move $a1, $s3
+      jal copia_string
+      # guarda string no vetor
+      ## li $v0, 4
+      ## syscall
+      
+      la $a0, linhaAtual
+      
       jal converte_string_para_float
       
-      # mov.s $f12, $f0
+      # mov.s $f12, $f03
       # li $v0, 2
       # syscall
       
       # guarda float no vetor
       swc1 $f0, 0($s1)
       addi $s1, $s1, 4
+      addi $s3, $s3, 32
       
       la $t9, linhaAtual
+      
+      addi $s6, $s6, 1
       
       # la $a0, espaco
       # li $v0, 4
@@ -125,13 +152,21 @@ le_arquivo:
    
       j read_loop
    
-
-   #move $a0, $a1
-   #li $v0, 4
-   #syscall
    
-   li $v0, 10
-   syscall
+   
+   
+      copia_string:
+          lb   $s4, 0($a0)       # carrega o byte atual da origem
+          sb   $s4, 0($a1)       # armazena no destino
+          beqz $s4, fim_copia    # se for 0 (fim da string), termina
+          addi $a0, $a0, 1       # avança na origem
+          addi $a1, $a1, 1       # avança no destino
+          j copia_string
+  
+      fim_copia:
+          jr $ra
+         
+   
    
    
 # fecha arquivo
@@ -155,7 +190,7 @@ converte_string_para_float:
    l.s  $f3, dezFloat        # 10.0  (const)
    l.s  $f4, zeroPontoUmFloat        # 0.1   (const)
 
-   li   $t0, 0              # flag do decimal; 0 = parte inteira, 1 = parte fracionária
+   li   $t0, 0 # flag do decimal; 0 = parte inteira, 1 = parte fracionária
    li $t6, 0 # flag do sinal; 0 = positivo e 1 negativo
 
    move $s0, $a0 # string recebida
@@ -251,6 +286,36 @@ imprime_vetor: # a0 = tamanho; a1 = vetor
 
 
 
+imprime_vetor_de_string: # a0 = tamanho; a1 = vetor
+   addi $sp, $sp, -4
+   sw $ra, 0($sp)
+
+   li $t0, 32 # tamanho da palavra
+   mul $t1, $a0, $t0 # tamanho real do vetor
+   move $t2, $a1 # armazena vetor em t2
+   li $t3, 0 # contador i
+
+   ivs_loop:
+      bgt $t3, $t1, end_ivs_loop
+      move $a0, $t2
+      
+      jal imprime_string
+      
+      la $a0, espaco
+      jal imprime_string
+      
+      addi $t2, $t2, 32 # incrementa a posicao do vetor
+      addi $t3, $t3, 32 # incrementa o i do loop
+      
+      j ivs_loop
+      
+   end_ivs_loop:
+      lw $ra, 0($sp)
+      addi $sp, $sp, 4
+
+      jr $ra
+
+
 
 imprime_float:
    addi $sp, $sp, -4
@@ -279,6 +344,10 @@ imprime_string:
    addi $sp, $sp, -4
    sw $ra, 0($sp)
    
+   li $v0, 4
+   syscall
+   
+   la $a0, espaco
    li $v0, 4
    syscall
    
