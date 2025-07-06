@@ -388,9 +388,23 @@ escreve_no_arquivo:
    loop_escrita:
       beq $t0, $s1, fim_loop_escrita # se contador ultrapassar tamanho
       
+      li $t1, 0 # tamanho da string
+      
+      contador_de_tamanho_da_string_loop:
+         lb  $t2, 0($s0)
+         beqz $t2, fim_contador_de_tamanho_da_string_loop
+         addi $s0, $s0, 1
+         addi $t1, $t1, 1
+         j    contador_de_tamanho_da_string_loop
+         
+      fim_contador_de_tamanho_da_string_loop:
+         move $a2, $t1     # $a2 = n bytes reais, sem o '\0'
+         
+      sub $s0, $s0, $t1
+      
       move $a0, $s2
       move $a1, $s0
-      li $a2, 32
+      # li $a2, 32
       li $v0, 15
       syscall
       
