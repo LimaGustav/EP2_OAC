@@ -7,7 +7,7 @@
 
 const char* caminhoArquivo = "C:\\Users\\OLIMPIADA2024\\Desktop\\OAC\\EP2\\dados.txt";
 
-float particao(float* numeros, int inicio, int fim) {
+int particao(float* numeros, int inicio, int fim) {
 	float pivo = numeros[fim];
 	int i = inicio-1;
 	int j = inicio;
@@ -28,9 +28,10 @@ float particao(float* numeros, int inicio, int fim) {
 	return i + 1;
 }
 
+//                
 void quickSort(float* numeros,int inicio, int fim) {
 	if (inicio >= fim) return;
-	float q = particao(numeros, inicio, fim);
+	int q = particao(numeros, inicio, fim);
 	quickSort(numeros, inicio, q - 1);
 	quickSort(numeros, q + 1, fim);
 }
