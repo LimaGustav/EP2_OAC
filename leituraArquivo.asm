@@ -15,6 +15,7 @@
 	digitosEmFloat: .float 0.0,1.0,2.0,3.0,4.0,5.0,6.0,7.0,8.0,9.0
 	
 	vetorFloat: .space 120000
+	vetorString: .space 120000
 	
 	espaco: .asciiz " "
 
@@ -26,9 +27,9 @@ le_arquivo:
    li $v0, 13
    syscall
    
-   move $s0, $v0
+   move $s2, $v0
    
-   move $a0, $s0
+   move $a0, $s2
    la $a1, conteudoDoArquivo
    la $a2, 100000
    li $v0, 14
@@ -90,6 +91,10 @@ le_arquivo:
       move $a0, $s6
       la $a1, vetorFloat
       jal imprime_vetor
+
+      jal fecha_arquivo
+      
+      jal escreve_no_arquivo
       
       li $v0, 10
       syscall
@@ -125,8 +130,6 @@ le_arquivo:
    #li $v0, 4
    #syscall
    
-   jal fecha_arquivo
-   
    li $v0, 10
    syscall
    
@@ -134,11 +137,15 @@ le_arquivo:
 # fecha arquivo
 fecha_arquivo:
    li $v0, 16
-   move $a0, $s0
+   move $a0, $s2
    syscall
    
    jr $ra
-         
+
+
+
+
+
          
 # $a0 = string que vai ser convertida
 converte_string_para_float:
@@ -277,5 +284,34 @@ imprime_string:
    
    lw $ra, 0($sp)
    addi $sp, $sp, 4
+   
+   jr $ra
+
+
+
+
+escreve_no_arquivo:
+   la $a0, caminhoArquivo
+   li $a1, 9
+   li $v0, 13
+   syscall # salva descritor no v0
+   
+   move $s2, $v0
+   
+   # escrevendo string no arquivo
+   move $a0, $s2
+   la $a1, end
+   li $a2, 17
+   li $v0, 15
+   syscall
+   
+   la $a0, end
+   li $v0, 4
+   syscall
+   
+   # fecha arquivo
+   li $v0, 16
+   move $a0, $s2
+   syscall
    
    jr $ra
