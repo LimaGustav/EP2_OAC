@@ -1,0 +1,197 @@
+.data:
+	end: .asciiz "\nFim do looping: "
+	caminhoArquivo: .asciiz "/Users/mbp16/Documents/Projects/oac-ep2/EP2_OAC/dados.txt"
+	conteudoDoArquivo: .space 120000
+	quebraDeLinhaAsc: .word 10
+	espacoAsc: .word 32
+	
+	linhaAtual: .space 32
+	
+	zeroFloat: .float 0.0
+	umFloat:  .float 1.0
+	dezFloat:  .float 10.0
+	zeroPontoUmFloat:  .float 0.1        # 10^-1
+	
+	digitosEmFloat: .float 0.0,1.0,2.0,3.0,4.0,5.0,6.0,7.0,8.0,9.0
+	
+	vetorFloat: .space 4096
+	
+	espaco: .asciiz " "
+
+.text:
+
+le_arquivo:
+   la $a0, caminhoArquivo
+   li $a1, 0
+   li $v0, 13
+   syscall
+   
+   move $s0, $v0
+   
+   move $a0, $s0
+   la $a1, conteudoDoArquivo
+   la $a2, 100000
+   li $v0, 14
+   syscall
+   
+   move $a0, $v0
+   li $v0, 1
+   syscall
+   
+   move $s7, $a0 # quantidade de bytes lidos do arquivo
+   addi $t7, $s7, 1
+   
+   
+   #la $t1, linhaAtual
+   la $t1, vetorFloat
+   la $t4, quebraDeLinhaAsc
+   lw $t4, 0($t4)
+   la $t5, conteudoDoArquivo
+   li $t6, 0 # contador de palavras
+   li $t7, 0 # contador de caracteres lidos
+   li $t8, 0 # posicao no vetor
+   
+   la $t9, linhaAtual # linha atual
+   
+   
+   read_loop:
+      bgt $t7, $s7, fim_read_loop
+      
+      lb $t3, 0($t5) # caractere atual
+      addi $t7, $t7, 1
+      addi $t5, $t5, 1
+      
+      bgt $t7, $s7, grava_numero_como_float
+      beq $t3, $t4, grava_numero_como_float
+      sb $t3, 0($t9)
+      
+      addi $t9, $t9, 1
+      
+      j read_loop
+   
+   
+   fim_read_loop:
+      la $a0, quebraDeLinhaAsc
+      li $v0, 4
+      syscall
+   
+      move $a0, $t7
+      li $v0, 1
+      syscall
+      
+      li $v0, 10
+      syscall
+   
+   
+   grava_numero_como_float:
+      sb $zero, 0($t9) # adiciono o 0 no fim para indicar que é uma string
+      
+      addi $t6, $t6, 1
+      
+      # conversão da linha atual em float
+      la $a0, linhaAtual
+      jal converte_string_para_float
+      
+      mov.s $f12, $f0
+      li $v0, 2
+      syscall
+      
+      la $t9, linhaAtual
+      
+      la $a0, espaco
+      li $v0, 4
+      syscall
+   
+      j read_loop
+   
+
+   #move $a0, $a1
+   #li $v0, 4
+   #syscall
+   
+   jal fecha_arquivo
+   
+   li $v0, 10
+   syscall
+   
+   
+# fecha arquivo
+fecha_arquivo:
+   li $v0, 16
+   move $a0, $s0
+   syscall
+   
+   jr $ra
+         
+         
+# $a0 = string que vai ser convertida
+converte_string_para_float:
+   # f0 = acc (resultado), f2 = factor (1.0 ou 0.1, 0.01, ...)
+   l.s  $f0, zeroFloat       # acc = 0.0
+   l.s  $f2, umFloat        # factor = 1.0   (antes do ponto)
+   l.s  $f3, dezFloat        # 10.0  (const)
+   l.s  $f4, zeroPontoUmFloat        # 0.1   (const)
+
+   li   $t0, 0              # flag do decimal; 0 = parte inteira, 1 = parte fracionária
+   li $t6, 0 # flag do sinal; 0 = positivo e 1 negativo
+
+   move $s0, $a0 # string recebida
+
+   # verificacao do sinal do numero
+   lb   $t1, 0($s0)
+   li   $t2, 45 # codigo asc do -
+   bne  $t1, $t2, continua_parse # se valor for positivo, continua
+   li   $t6, 1 # marca como negativo
+   addi $s0, $s0, 1 # pula o símbolo '-' e segue
+
+   continua_parse:
+
+   loop_conversao:
+      lb   $t1, 0($s0)         # lê próximo char
+      beqz $t1, finaliza_conversao         # fim da string?
+
+      li   $t2, 46             # 46 é o '.'
+      beq  $t1, $t2, sinaliza_decimal
+
+      # se não é dígito, pula
+      li   $t2, 48             # 49 é o digito 0
+      li   $t3, 57             # 57 é o digito 9
+      blt  $t1, $t2, passa_pro_proximo_char # checa se valor é menor que 0
+      bgt  $t1, $t3, passa_pro_proximo_char # checa se valor é maior que 9
+
+      sub  $t1, $t1, $t2       # t1 = dígito (0-9)
+
+      # carrega digito como float
+      la   $s5, digitosEmFloat
+      sll $t1, $t1, 2         # *4 (tamanho float)
+      add  $s5, $s5, $t1
+      l.s  $f1, 0($s5)         # f1 = dígito em float
+
+      beq  $t0, 0, trata_inteiro
+
+      # parte fracionária
+      mul.s $f2, $f2, $f4
+      mul.s $f5, $f1, $f2 # multiplica o valor por 0.1
+      add.s $f0, $f0, $f5 # adiciona parte fracionaria no valor final
+      j    passa_pro_proximo_char
+
+   trata_inteiro:
+      mul.s $f0, $f0, $f3      # deixa valor inteiro
+      add.s $f0, $f0, $f1      # soma inteiro no valor final
+      j    passa_pro_proximo_char
+
+   sinaliza_decimal:
+      li   $t0, 1              # agora na parte decimal
+      j    passa_pro_proximo_char
+
+   passa_pro_proximo_char:
+      addi $s0, $s0, 1 # vai pro proximo char
+      j    loop_conversao
+
+   finaliza_conversao:
+      beq  $t6, $zero, retorno
+      neg.s $f0, $f0
+      jr   $ra
+
+   retorno:
+      jr   $ra
