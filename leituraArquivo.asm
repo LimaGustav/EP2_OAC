@@ -101,7 +101,6 @@ le_arquivo:
       li $v0, 4
       syscall
       
-      # move $a0, $s6
       move $a0, $s6 # move tamanho do vetor para a0
       la  $a1, vetorString
       jal imprime_vetor_de_string
@@ -127,17 +126,10 @@ le_arquivo:
       la $a0, linhaAtual
       move $a1, $s3
       jal copia_string
-      # guarda string no vetor
-      ## li $v0, 4
-      ## syscall
       
       la $a0, linhaAtual
       
       jal converte_string_para_float
-      
-      # mov.s $f12, $f03
-      # li $v0, 2
-      # syscall
       
       # guarda float no vetor
       swc1 $f0, 0($s1)
@@ -147,10 +139,6 @@ le_arquivo:
       la $t9, linhaAtual
       
       addi $s6, $s6, 1
-      
-      # la $a0, espaco
-      # li $v0, 4
-      # syscall
    
       j read_loop
    
@@ -404,7 +392,6 @@ escreve_no_arquivo:
       
       move $a0, $s2
       move $a1, $s0
-      # li $a2, 32
       li $v0, 15
       syscall
       
