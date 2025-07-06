@@ -1,12 +1,11 @@
 .data
-	stringVector: .space 4096
 	vetor: .float 1.1 12.0 3.0 5.0 3.0 7.0 0.0 -15.0 11.0
 	zeroF: .float 0.0
 	space: .asciiz " "
 	
 	
 	end: .asciiz "\nFim do looping: "
-	antes: .asciiz "Antes do algoritmo: "
+	antes: .asciiz "\nAntes do algoritmo: "
 	depois: .asciiz "\nDepois do algoritmo: "
 	caminhoArquivo: .asciiz "/Users/mbp16/Documents/Projects/oac-ep2/EP2_OAC/dados.txt"
 	conteudoDoArquivo: .space 120000
@@ -29,17 +28,20 @@
 
 .text
 	jal le_arquivo
-	
-	li $v0, 10
-	syscall
 
 	la $s0, vetorFloat
 	li $s1, 0 # i do loop
 	li $s3, 4 # tamanho da palavra
-	li $s4, 9 # ultimo valor de de i
-	li $s5, 8 # ultimo valor de j
+	# li $s4, 9 # ultimo valor de de i
+	move $s4, $s6 # quantidade de palavras do vetor
+	subi $s5, $s4, 1 # quantidade de vezes que o j serah percorrido
+	# li $s5, 8 # ultimo valor de j
 	
 	mul $s6, $s4, $s3 # ultima posicao do vetor
+	
+	move $a0, $s6
+	li $v0, 1
+	syscall
 	
 	lwc1 $f10, zeroF
 	
@@ -80,7 +82,7 @@
 	      end_loop2:
            
            addi $s1, $s1, 1
-           la $s0, vetor
+           la $s0, vetorFloat
 	   j loop
 	   
 	   
@@ -89,8 +91,8 @@
 	   jal imprime_string
 	   
 	   move $a0, $s4 # tamanho do vetor
-	   la $a1, vetor
-	   jal imprime_vetor
+	   la $a1, vetorString
+	   jal imprime_vetor_de_string
 	   
 	   li $v0, 10
 	   syscall
@@ -100,16 +102,36 @@
 	   move $t0, $a0 # armazena posicao do valor a esquerda em registrado temporaria
 	   mov.s $f1, $f12 # armazena valor a esquerda em registrador temporario
 	   
-	   la $t2, vetor
+	   la $t2, vetorFloat
 	   add $t3, $t2, $a0 # posicao no vetor do valor a esquerda
 	   
-	   la $t4, vetor
+	   la $t4, vetorFloat
 	   add $t5, $t4, $a1 # posicao no vetor do valor a direita
 	   
 	   swc1 $f14, 0($t3) # coloca valor a direita na posicao da esquerda
 	   swc1 $f1, 0($t5) # coloca valor a esquerda na posicao da direita
 	   
+	   # swap da string agora
+	   
+	   li $t6, 8 # valor que precisa para ser multiplicado e cehgar a 32 bytes
+	   
+	   mul $t0, $t0, $t6 # transforma a posicao a esquerda na posicao da string, que eh de 32 bytes
+	   
+	   mul $t2, $a1, $t6 # transforma a posicao a direita na posicao da string, que eh de 32 bytes
+	   
+	   la $t3, vetorString
+	   add $t3, $t3, $t0 #posicao no vetor do valor a esquerda
+	   lw $t5, 0($t3)
+	   
+	   la $t4, vetorString
+	   add $t4, $t4, $t2
+	   lw $t6, 0($t4)
+	   
+	   sw $t5, 0($t4)
+	   sw $t6, 0($t3)
+	   
 	   j loop2
+	   
 
 
 
@@ -197,17 +219,17 @@ le_arquivo:
       li $v0, 4
       syscall
       
-      move $a0, $s6
-      la $a1, vetorFloat
-      jal imprime_vetor
+      # move $a0, $s6
+      # la $a1, vetorFloat
+      # jal imprime_vetor
       
-      la $a0, quebraDeLinhaAsc
-      li $v0, 4
-      syscall
+      # la $a0, quebraDeLinhaAsc
+      # li $v0, 4
+      # syscall
       
-      move $a0, $s6 # move tamanho do vetor para a0
-      la  $a1, vetorString
-      jal imprime_vetor_de_string
+      # move $a0, $s6 # move tamanho do vetor para a0
+      # la  $a1, vetorString
+      # jal imprime_vetor_de_string
 
       jal fecha_arquivo
       
