@@ -102,13 +102,15 @@ le_arquivo:
       syscall
       
       # move $a0, $s6
-      move $a0, $s6
+      move $a0, $s6 # move tamanho do vetor para a0
       la  $a1, vetorString
       jal imprime_vetor_de_string
 
       jal fecha_arquivo
       
-      # jal escreve_no_arquivo
+      la $a0, vetorString
+      move $a1, $s6 # move tamanho do vetor para a1
+      jal escreve_no_arquivo
       
       li $v0, 10
       syscall
@@ -359,7 +361,11 @@ imprime_string:
 
 
 
+# $a0 = vetor de strings; $a1 = tamanho
 escreve_no_arquivo:
+   move $s0, $a0 # vetor 
+   move $s1, $a1 # tamahno do vetor
+
    la $a0, caminhoArquivo
    li $a1, 9
    li $v0, 13
@@ -373,6 +379,35 @@ escreve_no_arquivo:
    li $a2, 1
    li $v0, 15
    syscall
+   
+   li $v0, 15
+   syscall
+   
+   li $t0, 0 # contador
+   
+   loop_escrita:
+      beq $t0, $s1, fim_loop_escrita # se contador ultrapassar tamanho
+      
+      move $a0, $s2
+      move $a1, $s0
+      li $a2, 32
+      li $v0, 15
+      syscall
+      
+      move $a0, $s2
+      la $a1, quebraDeLinhaAsc
+      li $a2, 1
+      li $v0, 15
+      syscall
+      
+      addi $s0, $s0, 32
+      addi $t0, $t0, 1
+      
+      j loop_escrita
+   
+   
+   fim_loop_escrita:
+   
    
    # fecha arquivo
    li $v0, 16
