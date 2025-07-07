@@ -1,24 +1,21 @@
 .data
-	zeroF: .float 0.0
-	space: .asciiz " "
+   caminhoArquivo: .asciiz "/Users/mbp16/Documents/Projects/oac-ep2/EP2_OAC/dados.txt"
+   conteudoDoArquivo: .space 120000
+   quebraDeLinhaAsc: .word 10
 	
-	caminhoArquivo: .asciiz "/Users/mbp16/Documents/Projects/oac-ep2/EP2_OAC/dados.txt"
-	conteudoDoArquivo: .space 120000
-	quebraDeLinhaAsc: .word 10
+   linhaAtual: .space 32
 	
-	linhaAtual: .space 32
+   zeroFloat: .float 0.0
+   umFloat:  .float 1.0
+   dezFloat:  .float 10.0
+   zeroPontoUmFloat:  .float 0.1
 	
-	zeroFloat: .float 0.0
-	umFloat:  .float 1.0
-	dezFloat:  .float 10.0
-	zeroPontoUmFloat:  .float 0.1
+   digitosEmFloat: .float 0.0,1.0,2.0,3.0,4.0,5.0,6.0,7.0,8.0,9.0
 	
-	digitosEmFloat: .float 0.0,1.0,2.0,3.0,4.0,5.0,6.0,7.0,8.0,9.0
+   vetor: .space 120000
+   vetorString: .space 120000
 	
-	vetor: .space 120000
-	vetorString: .space 120000
-	
-	espaco: .asciiz " "
+   espaco: .asciiz " "
 
    bubbleSortMensagem: .asciiz "Ordenando vetor com Bubble Sort...\n"
    quickSortMensagem: .asciiz "Ordenando vetor com Quick Sort...\n"
@@ -37,11 +34,25 @@
       
    mul $s6, $s4, $s3 # tamanho do vetor em bytes
 
+   li $v0, 30
+   syscall
+   move $t8, $a0
+
    move $a0, $s4 # tamanho do vetor
    move $a1, $s7 # tipo de ordenação
    move $a2, $s0 # vetor de floats
+   
 
    jal ordena
+   
+   li $v0, 30
+   syscall
+   move $t9, $a0
+   
+   sub $a0, $t9, $t8
+   
+   li $v0, 1
+   syscall
 
    li $v0, 10
    syscall
@@ -56,6 +67,9 @@ ordena:
    move $t0, $a0 # tamanho do vetor
    move $t1, $a1 # tipo de ordenação
    move $t2, $a2 # vetor de floats
+   
+   addi $sp, $sp, -4
+   sw $ra, 0($sp)
 
    li $t3, 1
    beq $t1, $zero, executa_bubblesort
@@ -76,18 +90,22 @@ ordena:
       move $a0, $v0 # pega vetor retornado e coloca em a0
       move $a1, $s4 # pega tamanho do vetor e coloca em a1
       jal escreve_no_arquivo
+      
+      lw $ra, 0($sp)
+      addi $sp, $sp, 4
 
-      li $v0, 10
-      syscall
+      jr $ra
 
    executa_quicksort:
       la $a0, quickSortMensagem
       li $v0, 4
       syscall
+      
+      lw $ra, 0($sp)
+      addi $sp, $sp, 4
 
       # precisamos implementar ainda
-      li $v0, 10
-      syscall
+      jr $ra
 
 
 
@@ -106,7 +124,7 @@ bubblesort:
    addi $sp, $sp, -4
    sw $ra, 0($sp)
 
-   lwc1 $f10, zeroF
+   lwc1 $f10, zeroFloat
    
    move $a0, $s4
    move $a1, $s0
@@ -165,8 +183,7 @@ bubblesort:
       swc1 $f14, 0($t3) # coloca valor a direita na posicao da esquerda
       swc1 $f1, 0($t5) # coloca valor a esquerda na posicao da direita
       
-      # swap da string agora
-      
+      # swap da string no vetor de strings
       li $t6, 8 # valor que precisa para ser multiplicado e cehgar a 32 bytes
       
       mul $t0, $t0, $t6 # transforma a posicao a esquerda na posicao da string, que eh de 32 bytes
@@ -217,11 +234,11 @@ le_arquivo:
    
    move $a0, $v0 # tamanho lido do arquivo
    move $s7, $a0 # quantidade de bytes lidos do arquivo
-   addi $t7, $s7, 1
+   addi $t7, $s7, 1 #
    
-   la $s1, vetor
+   la $s1, vetor # vetor de floats onde serah guardado o resultado
    la $t4, quebraDeLinhaAsc
-   lw $t4, 0($t4)
+   lw $t4, 0($t4) # quebra de linha em ascii
    la $t5, conteudoDoArquivo
    li $s6, 0 # contador de palavras
    li $t7, 0 # contador de caracteres lidos
@@ -238,7 +255,7 @@ le_arquivo:
       addi $t5, $t5, 1
       
       bgt $t7, $s7, grava_numero_como_float
-      beq $t3, $t4, grava_numero_como_float
+      beq $t3, $t4, grava_numero_como_float # se for quebra de linha, grava o numero como float
       sb $t3, 0($t9)
       
       addi $t9, $t9, 1
@@ -338,15 +355,14 @@ fecha_arquivo:
 
 
          
-# $a0 = string que vai ser convertida
+# $a0 = string que vai ser convertida; retorna o float convertido em $f0
 converte_string_para_float:
-   # f0 = acc (resultado), f2 = factor (1.0 ou 0.1, 0.01, ...)
-   l.s  $f0, zeroFloat       # acc = 0.0
-   l.s  $f2, umFloat        # factor = 1.0   (antes do ponto)
-   l.s  $f3, dezFloat        # 10.0  (const)
-   l.s  $f4, zeroPontoUmFloat        # 0.1   (const)
+   l.s $f0, zeroFloat # valor final tá sendo guardado em $f0
+   l.s $f2, umFloat # factor = 1.0   (antes do ponto)
+   l.s $f3, dezFloat# 10.0
+   l.s $f4, zeroPontoUmFloat # 0.1   (const)
 
-   li   $t0, 0 # flag do decimal; 0 = parte inteira, 1 = parte fracionária
+   li $t0, 0 # flag do decimal; 0 = estamos tratando a parte inteira, 1 = estamos tratando a parte fracionária
    li $t6, 0 # flag do sinal; 0 = positivo e 1 negativo
 
    move $s0, $a0 # string recebida
@@ -361,54 +377,54 @@ converte_string_para_float:
    continua_parse:
 
    loop_conversao:
-      lb   $t1, 0($s0)         # lê próximo char
-      beqz $t1, finaliza_conversao         # fim da string?
+      lb   $t1, 0($s0) # lê próximo char
+      beqz $t1, finaliza_conversao # se o proximo char for 0, finaliza a conversao
 
-      li   $t2, 46             # 46 é o '.'
+      li   $t2, 46 # o código asc 46 é o '.'
       beq  $t1, $t2, sinaliza_decimal
 
       # se não é dígito, pula
-      li   $t2, 48             # 49 é o digito 0
-      li   $t3, 57             # 57 é o digito 9
+      li   $t2, 48 # 49 é o digito 0
+      li   $t3, 57 # 57 é o digito 9
       blt  $t1, $t2, passa_pro_proximo_char # checa se valor é menor que 0
       bgt  $t1, $t3, passa_pro_proximo_char # checa se valor é maior que 9
 
-      sub  $t1, $t1, $t2       # t1 = dígito (0-9)
+      sub  $t1, $t1, $t2 # t1 = dígito (0-9)
 
       # carrega digito como float
-      la   $s5, digitosEmFloat
-      sll $t1, $t1, 2         # *4 (tamanho float)
-      add  $s5, $s5, $t1
-      l.s  $f1, 0($s5)         # f1 = dígito em float
+      la $s5, digitosEmFloat
+      sll $t1, $t1, 2 # *4 pra deixar no tamanho de float
+      add $s5, $s5, $t1
+      l.s $f1, 0($s5) # f1 = dígito em float
 
-      beq  $t0, 0, trata_inteiro
+      beq $t0, 0, trata_inteiro
 
       # parte fracionária
-      mul.s $f2, $f2, $f4
-      mul.s $f5, $f1, $f2 # multiplica o valor por 0.1
+      mul.s $f2, $f2, $f4 # multiplica o 1 por 0.1
+      mul.s $f5, $f1, $f2 # multiplica o dígito por 0.1
       add.s $f0, $f0, $f5 # adiciona parte fracionaria no valor final
-      j    passa_pro_proximo_char
+      j passa_pro_proximo_char
 
    trata_inteiro:
-      mul.s $f0, $f0, $f3      # deixa valor inteiro
-      add.s $f0, $f0, $f1      # soma inteiro no valor final
-      j    passa_pro_proximo_char
+      mul.s $f0, $f0, $f3 # deixa valor inteiro
+      add.s $f0, $f0, $f1 # soma inteiro no valor final
+      j passa_pro_proximo_char
 
    sinaliza_decimal:
-      li   $t0, 1              # agora na parte decimal
-      j    passa_pro_proximo_char
+      li $t0, 1 # agora na parte decimal
+      j passa_pro_proximo_char
 
    passa_pro_proximo_char:
       addi $s0, $s0, 1 # vai pro proximo char
-      j    loop_conversao
+      j loop_conversao
 
    finaliza_conversao:
-      beq  $t6, $zero, retorno
+      beq $t6, $zero, retorno
       neg.s $f0, $f0
-      jr   $ra
+      jr $ra
 
    retorno:
-      jr   $ra
+      jr $ra
 
 
 
@@ -434,14 +450,14 @@ escreve_no_arquivo:
    
    move $s2, $v0
    
-   # escrevendo string no arquivo
+   # escrevendo quebra de linha no arquivo
    move $a0, $s2
    la $a1, quebraDeLinhaAsc
    li $a2, 1
    li $v0, 15
    syscall
    
-   li $v0, 15
+   li $v0, 15 # acho que deixei redundante esse syscall
    syscall
    
    li $t0, 0 # contador
@@ -452,14 +468,14 @@ escreve_no_arquivo:
       li $t1, 0 # tamanho da string
       
       contador_de_tamanho_da_string_loop:
-         lb  $t2, 0($s0)
+         lb $t2, 0($s0)
          beqz $t2, fim_contador_de_tamanho_da_string_loop
          addi $s0, $s0, 1
          addi $t1, $t1, 1
-         j    contador_de_tamanho_da_string_loop
+         j contador_de_tamanho_da_string_loop
          
       fim_contador_de_tamanho_da_string_loop:
-         move $a2, $t1     # $a2 = n bytes reais, sem o '\0'
+         move $a2, $t1  # $a2 = n bytes reais, sem o '\0'
          
       sub $s0, $s0, $t1
       
@@ -481,11 +497,9 @@ escreve_no_arquivo:
    
    
    fim_loop_escrita:
-   
-   
-   # fecha arquivo
-   li $v0, 16
-   move $a0, $s2
-   syscall
-   
-   jr $ra
+      # fecha arquivo
+      li $v0, 16
+      move $a0, $s2
+      syscall
+      
+      jr $ra
