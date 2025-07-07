@@ -34,25 +34,11 @@
       
    mul $s6, $s4, $s3 # tamanho do vetor em bytes
 
-   li $v0, 30
-   syscall
-   move $t8, $a0
-
    move $a0, $s4 # tamanho do vetor
    move $a1, $s7 # tipo de ordenação
    move $a2, $s0 # vetor de floats
-   
 
    jal ordena
-   
-   li $v0, 30
-   syscall
-   move $t9, $a0
-   
-   sub $a0, $t9, $t8
-   
-   li $v0, 1
-   syscall
 
    li $v0, 10
    syscall
@@ -184,24 +170,26 @@ bubblesort:
       swc1 $f1, 0($t5) # coloca valor a esquerda na posicao da direita
       
       # swap da string no vetor de strings
-      li $t6, 8 # valor que precisa para ser multiplicado e cehgar a 32 bytes
-      
-      mul $t0, $t0, $t6 # transforma a posicao a esquerda na posicao da string, que eh de 32 bytes
-      
-      mul $t2, $a1, $t6 # transforma a posicao a direita na posicao da string, que eh de 32 bytes
-      
+      sll $t0, $a0, 3 # desloca pra ter o tamanho da string para posicao esquerda
+      sll $t2, $a1, 3 # repete o deslocamento de string, mas para a posicao direita
+
       la $t3, vetorString
-      add $t3, $t3, $t0 #posicao no vetor do valor a esquerda
-      lw $t5, 0($t3)
-      
+      add $t3, $t3, $t0
       la $t4, vetorString
       add $t4, $t4, $t2
-      lw $t6, 0($t4)
-      
-      sw $t5, 0($t4)
-      sw $t6, 0($t3)
-      
-      j loop2
+
+      li $t6, 8 # contador das palavras, pra fazer o swap da string completa
+      swap_da_string_completa_loop:
+         lw $t7, 0($t3) # trecho a esquerda
+         lw $t8, 0($t4) # techo a direita
+         sw $t8, 0($t3) # swap do trecho a direita para trecho a esquerda
+         sw $t7, 0($t4) # swap do trecho a esquerda para trecho a direita
+         addi $t3, $t3, 4
+         addi $t4, $t4, 4
+         addi $t6, $t6, -1
+         bgtz $t6, swap_da_string_completa_loop
+         
+         j loop2
 	   
 
 
@@ -234,7 +222,7 @@ le_arquivo:
    
    move $a0, $v0 # tamanho lido do arquivo
    move $s7, $a0 # quantidade de bytes lidos do arquivo
-   addi $t7, $s7, 1 #
+   addi $s7, $s7, 1 #
    
    la $s1, vetor # vetor de floats onde serah guardado o resultado
    la $t4, quebraDeLinhaAsc
@@ -248,13 +236,13 @@ le_arquivo:
    la $s3, vetorString
    
    read_loop:
-      bgt $t7, $s7, fim_read_loop
+      bgt $t7, $s7, fim_read_loop # checa se já leu todos os bytes
       
       lb $t3, 0($t5) # caractere atual
       addi $t7, $t7, 1
       addi $t5, $t5, 1
       
-      bgt $t7, $s7, grava_numero_como_float
+      bgt $t7, $s7, grava_numero_como_float # se já leu todos os bytes, grava o número como float
       beq $t3, $t4, grava_numero_como_float # se for quebra de linha, grava o numero como float
       sb $t3, 0($t9)
       
@@ -280,10 +268,9 @@ le_arquivo:
       
       la $a0, linhaAtual
       move $a1, $s3
-      jal copia_string
+      jal copia_string # copia a string da linha atual para o vetor de strings
       
       la $a0, linhaAtual
-      
       # conversão da linha atual, que estah como string, em float
       jal converte_string_para_float
       
